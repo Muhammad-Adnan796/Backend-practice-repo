@@ -5,7 +5,6 @@ const subTodoSchema = new mongoose.Schema(
     content: {
       type: String,
       required: true,
-      unique:true,
     },
     complete: {
       type: Boolean,
