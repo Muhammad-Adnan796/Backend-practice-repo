@@ -55,7 +55,7 @@ const productsController = {
       const skipCount = (pageNo-1) * pageSize
       const products = await ProductsModel.find({}).limit(pageSize).skip(skipCount);
       if (products.length > 0) {
-        res
+       return res
           .status(200)
           .send(SendResponse(true, "Products fetched successfully", products));
       } else {

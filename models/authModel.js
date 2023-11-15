@@ -12,6 +12,10 @@ const UserAuthSchema = mongoose.Schema({
   contact: {
     type: Number,
   },
+  image:{
+    data:Buffer,
+    contentType:String
+  }
 });
 
 const UserAuthModel = mongoose.model("Users", UserAuthSchema);

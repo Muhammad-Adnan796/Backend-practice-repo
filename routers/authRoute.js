@@ -16,4 +16,9 @@ route.put("/:id", AuthController.editById);
 // for delete data
 route.delete("/:id", AuthController.del); */
 
+
+// For Post images data to the api
+// route.post("/signup",upload.single('file'), AuthController.signUp);
+route.post("/signup", AuthController.signUp);
+
 module.exports = route;

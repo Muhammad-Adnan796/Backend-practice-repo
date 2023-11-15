@@ -9,4 +9,4 @@ const SendResponse = (isSuccessfull, message, data) => {
   };
 };
 
-module.exports  =  SendResponse; 
+module.exports  =  SendResponse;  

@@ -47,11 +47,16 @@ const productsRoute = require("./routers/productsRoute");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const fileUpload = require("express-fileupload");
+
 
 const app = express();
 app.use(express.json());
 app.use(cors())
-app.use(bodyParser.json())
+app.use(bodyParser.json());
+app.use(fileUpload({
+  useTempFiles:true,
+}))
 
 const port = process.env.PORT || 8000;
 

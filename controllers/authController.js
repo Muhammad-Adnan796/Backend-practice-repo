@@ -1,13 +1,28 @@
 const jwt = require("jsonwebtoken");
 const SendResponse = require("../helpers/helpers");
 const UserAuthModel = require("../models/authModel");
+require("dotenv").config();
 const bcrypt = require("bcrypt");
+const cloudinary = require("cloudinary").v2;
+          
+cloudinary.config({ 
+  cloud_name: 'dmdqnzqor', 
+  api_key: '673761169784497', 
+  api_secret: 'Cf9m-oznhUy8mU_5d9py5JK04qo' 
+});
 
- const AuthController = {
+const AuthController = {
   signUp: async (req, res) => {
     try {
-      const { userName, password, contact } = req.body;
-      if (!userName || !password || !contact) {
+
+      const file = req.files.photos;
+      const cloud_Imge = await cloudinary.uploader.upload(file.tempFilePath,(error,result)=>{
+        return result;
+      })
+      console.log(cloud_Imge);
+      const { userName, password, contact,image } = req.body;
+
+      if (!userName || !password || !contact || !image) {
         return res
           .status(400)
           .send(
@@ -31,6 +46,7 @@ const bcrypt = require("bcrypt");
             userName,
             password: passwordEncrypt,
             contact,
+            image: cloud_Imge,
           });
           const user = await newUser.save();
           if (user) {
@@ -41,7 +57,7 @@ const bcrypt = require("bcrypt");
         }
       }
     } catch (error) {
-        console.log(error);
+      console.log(error);
       res.status(500).send(SendResponse(true, "Error post data ", null));
     }
   },
@@ -55,7 +71,7 @@ const bcrypt = require("bcrypt");
           userExist.password
         );
         if (correctPassword) {
-          let token = jwt.sign({ ...userExist }, process.env.SECRET_KEY);
+          let token = jwt.sign({ ...userExist }, process.env.JWT_SECRET_KEY);
 
           return res.status(200).send(
             SendResponse(true, "Login Successfully", {
@@ -72,16 +88,99 @@ const bcrypt = require("bcrypt");
         res
           .status(404)
           .send(
-            SendResponse(false, "User not found with this user name", users)
+            SendResponse(false, "User not found with this user name", userExist)
           );
       }
     } catch (error) {
-        console.log(error);
+      console.log(error);
       res.status(500).send(SendResponse(false, "Error fetching user", null));
     }
   },
-  protected: () => {},
+  // addImg: async (req, res) => {
+  //   fs.readdirSync("images/").forEach((file) => {
+  //     console.log(file);
+
+  //     cloudinary.v2.uploader.upload(`images/${file}`, {}, (error, result) => {
+  //       console.log(result, error);
+  //       if (error) {
+  //         fs.remove(file, (error) => {
+  //           if (error) {
+  //             return error;
+  //           } else {
+  //             return res
+  //               .status(200)
+  //               .send(SendResponse(true, "file removes seccessfully", null));
+  //           }
+  //         });
+  //         return res.status(400).send(SendResponse(false, error.message, null));
+  //       } else {
+  //         fs.remove(file, (error) => {
+  //           if (error) {
+  //             return error;
+  //           } else {
+  //             return res
+  //               .status(200)
+  //               .send(SendResponse(true, "file removes seccessfully", null));
+  //           }
+  //         });
+  //         return res
+  //           .status(200)
+  //           .send(SendResponse(false, "Uploaded", { url: result.url }));
+  //       }
+  //     });
+  //   });
+  // },
+  protected: async (req, res, next) => {
+    const { authorization } = req.headers;
+    const token = authorization && authorization.split(" ")[1];
+    try {
+      if (!token) {
+        return res
+          .status(401)
+          .json(
+            SendResponse(401, false, "Unauthorized: Token is missing", null)
+          );
+      } else {
+        jwt.verify(token, process.env.JWT_SECRET_KEY, (error, user) => {
+          if (error) {
+            return res
+              .status(403)
+              .json(SendResponse(401, false, "Forbidden: Invalid token", null));
+          } else {
+            next();
+          }
+        });
+      }
+    } catch (error) {
+      return res.status(500).send(SendResponse(500, false, error.message, null));
+    }
+  },
+  adminProtected: async (req, res, next) => {
+    const { authorization } = req.headers;
+    const token = authorization && authorization.split(" ")[1];
+    try {
+      if (!token) {
+        return res
+          .status(401)
+          .json(
+            SendResponse(401, false, "Unauthorized: Token is missing", null)
+          );
+      } else {
+        jwt.verify(token, process.env.JWT_SECRET_KEY, (error, user) => {
+          if (error) {
+            return res
+              .status(403)
+              .json(SendResponse(401, false, "Forbidden: Invalid token", null));
+          } else {
+            next();
+            return;
+          }
+        });
+      }
+    } catch (error) {
+      return res.status(401).send();
+    }
+  },
 };
 
-
-module.exports =  AuthController;
+module.exports = AuthController;
