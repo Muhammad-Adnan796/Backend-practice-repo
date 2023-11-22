@@ -7,7 +7,7 @@ function ApiError(
   stack = ""
 ) {
   const apiErrors = new Error(message);
-  console.log(apiErrors);                 /// this console is for checkin error properties
+  console.log(apiErrors); /// this console is for checking error properties
   apiErrors.statusCode = statusCode;
   apiErrors.data = null;
   apiErrors.message = message;
@@ -25,9 +25,10 @@ function ApiError(
 
 /* How to call this function in another file */
 
-const myApiError = ApiError(404, "Resource not found", [{ field: "id", message: "Invalid ID" }]);
+const myApiError = ApiError(404, "Resource not found", [
+  { field: "id", message: "Invalid ID" },
+]);
 console.log(myApiError);
-
 
 // Error handling in class form
 
@@ -54,4 +55,4 @@ console.log(myApiError);
 export { ApiError };
 */
 
-export { createApiError };
+export { ApiError };

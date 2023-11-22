@@ -26,11 +26,11 @@ const userSchema = new Schema(
       index: true,
     },
     avatar: {
-      type: String, // cloudinary url
+      type: String,       // cloudinary url
       required: true,
     },
     coverImage: {
-      type: String, // cloudinary url
+      type: String,       // cloudinary url
     },
     watchHistory: [
       {
@@ -49,14 +49,14 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-/* for password encryption */
+/* for password encryption */    // built-In methods
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-/* for password decryption */
+/* for password decryption */     // this method is made by developer
 userSchema.methods.isPasswordCorrect = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
