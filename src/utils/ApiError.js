@@ -25,10 +25,10 @@ function ApiError(
 
 /* How to call this function in another file */
 
-const myApiError = ApiError(404, "Resource not found", [
+/* const myApiError = ApiError(404, "Resource not found", [
   { field: "id", message: "Invalid ID" },
 ]);
-console.log(myApiError);
+console.log(myApiError); */
 
 // Error handling in class form
 
