@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 // Router Imports
 
-import  userRouter from "./routes/user.routes.js";
+import userRouter from "./routes/user.routes.js";
 
 // routes declaration
 
