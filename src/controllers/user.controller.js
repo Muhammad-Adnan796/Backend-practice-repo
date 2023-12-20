@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
 
 // * --------------------------------------------
 // * generating access and refresh token function
@@ -46,7 +47,7 @@ const registerUser = asyncHandler(async (req, res) => {
   if (
     [username, email, fullName, password].some((field) => field?.trim() === "")
   ) {
-    throw new ApiError(400, "All field are requiredF");
+    throw new ApiError(400, "All field are required!");
   }
 
   // or operator is coming from mongoose and this operator is checked first object
@@ -57,11 +58,18 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (existedUser) {
-    throw new ApiError(409, "User with email or username already exists");
+    throw new ApiError(409, "User with this email or username already exists!");
   }
 
-  const avatarLocalPath = req.files?.avatar[0]?.path;
-  // const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let avatarLocalPath;
+
+  if (
+    req.files &&
+    Array.isArray(req.files.avatar) &&
+    req.files.avatar.length > 0
+  ) {
+    avatarLocalPath = req.files?.avatar[0]?.path;
+  }
 
   let coverImageLocalPath;
   if (
@@ -89,7 +97,7 @@ const registerUser = asyncHandler(async (req, res) => {
     coverImage: coverImage?.url || "",
     email,
     password,
-    username: username.toLowerCase(),
+    username: username?.toLowerCase(),
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -191,6 +199,55 @@ const logoutUser = asyncHandler(async (req, res) => {
     .json(ApiResponse(200, "User Log out Successfully!"));
 });
 
-export { registerUser, loginUser, logoutUser };
+// * --------------------------------------------
+// * refreshAccessToken user method
+// * --------------------------------------------
 
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
 
+  if (!incomingRefreshToken) {
+    throw ApiError(401, "Unauthorized request!");
+  }
+
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken._id);
+
+    if (!user) {
+      throw ApiError(401, "Invalid refresh token!");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw ApiError(401, "Refresh token is expired or used!");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access token refreshed!"
+        )
+      );
+  } catch (error) {
+    throw ApiError(401, error?.message || "Invalid refresh token!");
+  }
+});
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
